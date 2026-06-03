@@ -129,6 +129,21 @@ describe('GetGoalTool', () => {
 });
 
 describe('SetGoalBudgetTool', () => {
+  it('exposes an object parameter schema for provider tool registration', () => {
+    const tool = new SetGoalBudgetTool(fakeAgent());
+
+    expect(tool.parameters).toMatchObject({
+      type: 'object',
+      properties: {
+        value: { type: 'number' },
+        unit: {
+          enum: ['turns', 'tokens', 'milliseconds', 'seconds', 'minutes', 'hours'],
+        },
+      },
+      required: ['value', 'unit'],
+    });
+  });
+
   it('accepts a value with a supported budget unit', () => {
     for (const unit of ['turns', 'tokens', 'milliseconds', 'seconds', 'minutes', 'hours']) {
       expect(SetGoalBudgetToolInputSchema.safeParse({ value: 20, unit }).success).toBe(true);

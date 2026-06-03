@@ -17,21 +17,24 @@ import DESCRIPTION from './set-goal-budget.md';
 const MIN_REASONABLE_TIME_BUDGET_MS = 1_000;
 const MAX_REASONABLE_TIME_BUDGET_MS = 24 * 60 * 60 * 1000;
 
-const WholeNumberBudgetValueSchema = z
-  .number()
-  .int()
-  .positive()
-  .describe('The positive whole-number budget value.');
 const TimeBudgetValueSchema = z.number().positive().describe('The positive numeric time budget value.');
+const BudgetUnitSchema = z.enum(['turns', 'tokens', 'milliseconds', 'seconds', 'minutes', 'hours']);
 
-export const SetGoalBudgetToolInputSchema = z.discriminatedUnion('unit', [
-  z.object({ value: WholeNumberBudgetValueSchema, unit: z.literal('turns') }).strict(),
-  z.object({ value: WholeNumberBudgetValueSchema, unit: z.literal('tokens') }).strict(),
-  z.object({ value: TimeBudgetValueSchema, unit: z.literal('milliseconds') }).strict(),
-  z.object({ value: TimeBudgetValueSchema, unit: z.literal('seconds') }).strict(),
-  z.object({ value: TimeBudgetValueSchema, unit: z.literal('minutes') }).strict(),
-  z.object({ value: TimeBudgetValueSchema, unit: z.literal('hours') }).strict(),
-]);
+export const SetGoalBudgetToolInputSchema = z
+  .object({
+    value: TimeBudgetValueSchema,
+    unit: BudgetUnitSchema,
+  })
+  .strict()
+  .superRefine((input, ctx) => {
+    if ((input.unit === 'turns' || input.unit === 'tokens') && !Number.isInteger(input.value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['value'],
+        message: `${input.unit} budget value must be a positive whole number.`,
+      });
+    }
+  });
 
 export type SetGoalBudgetToolInput = z.infer<typeof SetGoalBudgetToolInputSchema>;
 
