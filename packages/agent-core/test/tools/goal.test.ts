@@ -175,6 +175,22 @@ describe('SetGoalBudgetTool', () => {
     expect(store.getGoal().goal?.budget.wallClockBudgetMs).toBe(30 * 60 * 1000);
   });
 
+  it('ignores fractional turn and token budgets during execution', async () => {
+    const store = makeStore();
+    await store.createGoal({ objective: 'work' });
+    const tool = new SetGoalBudgetTool(fakeAgent({ goals: store }));
+
+    const fractionalTurns = await executeTool(tool, ctx({ value: 1.5, unit: 'turns' }));
+    expect(fractionalTurns.isError).toBeFalsy();
+    expect(fractionalTurns.output).toContain('not a reasonable goal budget');
+    expect(store.getGoal().goal?.budget.turnBudget).toBeNull();
+
+    const fractionalTokens = await executeTool(tool, ctx({ value: 1.5, unit: 'tokens' }));
+    expect(fractionalTokens.isError).toBeFalsy();
+    expect(fractionalTokens.output).toContain('not a reasonable goal budget');
+    expect(store.getGoal().goal?.budget.tokenBudget).toBeNull();
+  });
+
   it('ignores unreasonable time budgets and tells the model why', async () => {
     const store = makeStore();
     await store.createGoal({ objective: 'work' });

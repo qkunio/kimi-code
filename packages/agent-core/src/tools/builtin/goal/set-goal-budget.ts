@@ -75,8 +75,10 @@ export class SetGoalBudgetTool implements BuiltinTool<SetGoalBudgetToolInput> {
 function budgetLimitsFromInput(input: SetGoalBudgetToolInput): GoalBudgetLimits | null {
   switch (input.unit) {
     case 'turns':
+      if (!Number.isInteger(input.value)) return null;
       return { turnBudget: input.value };
     case 'tokens':
+      if (!Number.isInteger(input.value)) return null;
       return { tokenBudget: input.value };
     default: {
       const wallClockBudgetMs = Math.round(toMilliseconds(input.value, input.unit));
